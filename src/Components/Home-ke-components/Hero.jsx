@@ -21,7 +21,7 @@ const Hero = () => {
     const [grtApproveToken, setgrtApproveToken] = useState();
     const [ApprovedDone, setApprovedDone] = useState(false);
     const refaddr ="0x5c2e2282a12F470519097447d5B1376A15e082CF";
-
+    const [triggerStake, setTriggerStake] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const [IsKeyPresent, setIsKeyPresent] = useState(false);
@@ -36,86 +36,61 @@ const Hero = () => {
     function keyPresentHandle() {
         setIsKeyPresent(!IsKeyPresent);
     }
-    
 
-   
-        /*const readingData = async (event) => {
-            //event.preventDefault();
-        console.log("First call");
+    useEffect(() => {
+        const handleApprovalAndStaking = async () => {
+          if (!account || !GrtTokenCount) return;
+    
+          setLoading(true);
+    
+          try {
+            // Check if approval is needed and approve tokens if necessary
+            const approve = await contract.approve(
+              GRT_STAKING_CONTRACT_ADDRESS,
+              ethers.utils.parseUnits(GrtTokenCount.toString(), 18)
+            );
+            await approve.wait(); // Wait for the transaction to be mined
+            console.log(approve);
+    
+            const balance = await contract.balanceOf(account);
+            const allowance = await contract.allowance(account, GRT_STAKING_CONTRACT_ADDRESS);
+    
+            console.log("Balance:", balance.toString());
+            console.log("Allowance:", allowance.toString());
+    
+            // Stake tokens
+            const stake = await stakecontract.stakeTokens(
+              ethers.utils.parseUnits(GrtTokenCount.toString(), 18),
+              selectedItem,
+              refaddr
+            );
+            console.log(stake);
+          } catch (error) {
+            console.error("Error in staking:", error);
+          } finally {
+            setLoading(false);
+          }
+        };
+    
+        handleApprovalAndStaking();
+      }, [account, GrtTokenCount, selectedItem, refaddr]); // This effect runs when these state variables change
+    
+      const stakeAmount = async (event) => {
+        event.preventDefault();
+    
+        // Ensure the user is connected and get their account
         if (typeof window.ethereum !== "undefined") {
           try {
             const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
             setAccount(accounts[0]);
-            if (account) {
-                try {
-                    console.log(account);
-                        
-                    const approve = await contract.approve(GRT_STAKING_CONTRACT_ADDRESS, ethers.utils.parseUnits(grtApproveToken.toString(), 18));
-                    console.log(approve);
-                    setApprovedDone(true)
-
-                } catch (error) {
-                    console.error("Error in approving tokens:", error);
-                }
-            }
           } catch (error) {
             console.error(error);
+            return;
           }
+        } else {
+          console.error("Ethereum object not found");
         }
-            
-        };*/
-        useEffect(() => {
-            const handleApproval = async () => {
-              if (account) {
-                try {
-                  const approve = await contract.approve(GRT_STAKING_CONTRACT_ADDRESS, ethers.utils.parseUnits(grtApproveToken.toString(), 18));
-                  console.log(approve);
-                  setApprovedDone(true);
-                } catch (error) {
-                  console.error("Error in approving tokens:", error);
-                }
-              }
-            };
-        
-            handleApproval();
-          }, [account]); // This effect runs when the account state changes
-        
-          const readingData = async (event) => {
-            console.log("First call");
-            if (typeof window.ethereum !== "undefined") {
-              try {
-                const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-                setAccount(accounts[0]);
-              } catch (error) {
-                console.error(error);
-              }
-            }
-          };
-        
-        const stakeAmount = async (event) => {
-            event.preventDefault();
-            if (!account) return;
-            setLoading(true);
-            const balance = await contract.balanceOf(account);
-            const allowance = await contract.allowance(account, GRT_STAKING_CONTRACT_ADDRESS);
-
-            console.log("Balance:", balance.toString());
-            console.log("Allowance:", allowance.toString());
-
-            //const approve = await contract.approve(GRT_STAKING_CONTRACT_ADDRESS, ethers.utils.parseUnits(grtApproveToken.toString(), 18));
-            //await approve.wait(); // Wait for the transaction to be mined
-
-          
-            try {
-              const stake = await stakecontract.stakeTokens(ethers.utils.parseUnits(GrtTokenCount.toString(), 18), selectedItem, refaddr);
-              console.log(stake);
-            } catch (error) {
-              console.error("Error in staking:", error);
-            } finally {
-              setLoading(false);
-            }
-          };
-
+      };
 
     //  timer start
     // const [timer, setTimer] = useState("");
@@ -264,27 +239,9 @@ const Hero = () => {
 
                             <div>
                                 <div className="relative mb-6">
-                                    <div className=" absolute inset-y-0 start-0 mx-3 flex items-center   pointer-events-none">
-                                        <img loading="lazy" src={rcoin} className="h-[30px]  w-[30px] " alt="" />
-                                    </div>
 
-                                    <input type="number" id="input-group-1" className="bg-gray-50 border border-gray-300 text-black text-sm rounded-lg  block w-full px-14 py-3 " placeholder=" Approve Token "
-                                        value={grtApproveToken}
-                                        onChange={(event) => event.target.value <= 0 ? setgrtApproveToken("") : setgrtApproveToken(parseFloat(event.target.value))}
-
-                                    />
-                                    <button
-
-                                        id="dropdownDefaultButton"
-                                        onClick={readingData}
-                                        className={` absolute inset-y-0 end-0 px-3 mx-3  my-2 rounded-lg text-sm flex items-center ${ApprovedDone ? "bg-green-500" : "bg-gray-500"}        `}
-                                        type="submit"
-                                    >
-
-                                        {`${ApprovedDone ? "Approved" : "Approve token"}`}
-
-
-                                    </button>
+                                    
+                                   
 
                                 </div>
                                 <div className="relative mb-6">
