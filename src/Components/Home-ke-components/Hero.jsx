@@ -12,18 +12,20 @@ import { GRT_TOKEN_CONTRACT_ADDRESS, GRT_STAKING_CONTRACT_ADDRESS ,GRT_TOKEN_CON
 
 const Hero = () => {
 
-
-
+    const [totalreward, setTotalReward] = useState("");
+    const [userstaked, setUserStaked] = useState("");
+    const [totalstaker, setTotalStaker] = useState("");
     const [isOpen, setIsOpen] = useState(false);
+    const [totalstaked, setTotalStaked] = useState("");
     const [selectedItem, setSelectedItem] = useState(0);
     const [GrtTokenCount, setGrtTokenCount] = useState(0);
     const [APTpercentage, setAPTpercentage] = useState();
-    const [grtApproveToken, setgrtApproveToken] = useState();
+   
     const [ApprovedDone, setApprovedDone] = useState(false);
     const refaddr ="0x5c2e2282a12F470519097447d5B1376A15e082CF";
     const [triggerStake, setTriggerStake] = useState(false);
     const [loading, setLoading] = useState(false);
-
+    
     const [IsKeyPresent, setIsKeyPresent] = useState(false);
 
     const [account, setAccount] = useState("");
@@ -32,12 +34,53 @@ const Hero = () => {
     const contract = new ethers.Contract(GRT_TOKEN_CONTRACT_ADDRESS, GRT_TOKEN_CONTRACT_ABI, signer);
     const stakecontract = new ethers.Contract(GRT_STAKING_CONTRACT_ADDRESS, GRT_STAKING_CONTRACT_ABI, signer);
     
+    
 
     function keyPresentHandle() {
         setIsKeyPresent(!IsKeyPresent);
     }
+    useEffect(() => {
+        const getData = async () => {
+            try {
+                if (typeof window.ethereum !== "undefined") {
+                    try {
+                        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                        setAccount(accounts[0]);
+                        //console.log("account: ", accounts[0]);
+    
+                        const totalS = await stakecontract.totalStaked();
+                        const totalStakedInt = ethers.utils.formatUnits(totalS, "ether");
+
+                        const totalstaker = await stakecontract.userCountInThePlatform();
+                        //console.log("total Staked: ", totalstaker.toString());
+                        const totalreward = await stakecontract.totalRewardsReceived(accounts[0]);
+                        //console.log("total reward: ", totalreward.toString());
+                        const userstaked = await stakecontract.totalInvestedAmount(accounts[0]);
+                        const userStakedInt = ethers.utils.formatUnits(userstaked, "ether");
+                        //console.log("total user staked: ", userstaked.toString());
+    
+                        setTotalStaker(totalstaker.toString());
+                        setTotalStaked(totalStakedInt.toString());
+                        setTotalReward(totalreward.toString());
+                        setUserStaked(userStakedInt.toString());
+                    } catch (error) {
+                        console.error("Error fetching data:", error);
+                    }
+                } else {
+                    console.error("Ethereum object not found");
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
+    
+        getData();
+    }, []);
+    
+    
 
     useEffect(() => {
+        //getData();
         const handleApprovalAndStaking = async () => {
           if (!account || !GrtTokenCount) return;
     
@@ -49,8 +92,10 @@ const Hero = () => {
               GRT_STAKING_CONTRACT_ADDRESS,
               ethers.utils.parseUnits(GrtTokenCount.toString(), 18)
             );
+            window.alert("Approve of token In process!");
             await approve.wait(); // Wait for the transaction to be mined
             console.log(approve);
+            window.alert("Approve Successfull");
     
             const balance = await contract.balanceOf(account);
             const allowance = await contract.allowance(account, GRT_STAKING_CONTRACT_ADDRESS);
@@ -64,7 +109,9 @@ const Hero = () => {
               selectedItem,
               refaddr
             );
+            window.alert("Staking is in process");
             console.log(stake);
+            window.alert("Stake Successfull");
           } catch (error) {
             console.error("Error in staking:", error);
           } finally {
@@ -124,6 +171,7 @@ const Hero = () => {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
+        
         const handleOutsideClick = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
@@ -146,7 +194,7 @@ const Hero = () => {
         setAPTpercentage(APYper)
         setIsOpen(false);
     };
-    let reward = !isNaN(GrtTokenCount) && selectedItem !== 0 ? (APTpercentage / 100) * GrtTokenCount : "";
+    let reward = !isNaN(GrtTokenCount) && selectedItem !== 0 ? ((APTpercentage / 100) * GrtTokenCount)+ GrtTokenCount  : "";
 
     return (
         <>
@@ -200,7 +248,7 @@ const Hero = () => {
 
                             <h1 className=" text-[70px] font-bold relative leading-tight laptop:text-center desktop:text-[60px]  desktop:laptop:text-[50px]  desktop:laptop:phone:text-[30px]    ">
 
-                                Bag Daily Cash, Earn Upto 18% a Year!
+                                Bag Daily Cash, Earn Upto 110% a Year!
 
 
                             </h1>
@@ -286,7 +334,7 @@ const Hero = () => {
                                                 <ul className="  text-sm text-gray-200" aria-labelledby="dropdownDefaultButton">
                                                     <li className=" border-b-[#1a9f08] border-b-[1px] " >
                                                         <button
-                                                            onClick={() => handleItemClick(30, 30)}
+                                                            onClick={() => handleItemClick(30, 2.5)}
                                                             className="block w-full px-4 py-2    hover:bg-gray-600  hover:text-white"
                                                         >
                                                             30 Days
@@ -294,7 +342,7 @@ const Hero = () => {
                                                     </li>
                                                     <li className=" border-b-[#1a9f08] border-b-[1px] ">
                                                         <button
-                                                            onClick={() => handleItemClick(90, 55)}
+                                                            onClick={() => handleItemClick(90, 15)}
                                                             className="block w-full px-4 py-2 hover:bg-gray-600 dark:hover:bg-gray-600 dark:hover:text-white"
                                                         >
                                                             90 Days
@@ -302,7 +350,7 @@ const Hero = () => {
                                                     </li>
                                                     <li className=" border-b-[#1a9f08] border-b-[1px] ">
                                                         <button
-                                                            onClick={() => handleItemClick(180, 72)}
+                                                            onClick={() => handleItemClick(180, 40)}
                                                             className="block w-full px-4 py-2 hover:bg-gray-600 dark:hover:bg-gray-600 dark:hover:text-white"
                                                         >
                                                             180 Days
@@ -310,7 +358,7 @@ const Hero = () => {
                                                     </li>
                                                     <li >
                                                         <button
-                                                            onClick={() => handleItemClick(365, 120)}
+                                                            onClick={() => handleItemClick(365, 110)}
                                                             className="block w-full px-4 py-2 hover:bg-gray-600 dark:hover:bg-gray-600 dark:hover:text-white"
                                                         >
                                                             365 Days
@@ -394,8 +442,8 @@ const Hero = () => {
             <div className=" px-14 py-2 w-full laptop:px-10 laptop:tablet:px-2    " >
                 <div id="banner-inner" className="  rounded-[10px] flex  p-5 gap-10 laptop:tablet:gap-5 flex-wrap justify-evenly">
                     <div id="banner-card" className="flex gap-2 flex-col items-center justify-center" >
-                        <h5 className="text-xl text-white " >Token live price</h5>
-                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >$2.3024</p>
+                        <h5 className="text-xl text-white " >User Stake Amount</h5>
+                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >{userstaked}</p>
                     </div>
 
                     <div className="w-[3px] h-24 tablet:hidden bg-gradient-to-b from-transparent via-gray-200    via-50% to-transparent" />
@@ -403,22 +451,22 @@ const Hero = () => {
 
 
                     <div id="banner-card" className="flex gap-2 flex-col items-center justify-center" >
-                        <h5 className="text-xl text-white " >Total staked tokens</h5>
-                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >$0,000,0000</p>
+                        <h5 className="text-xl text-white " >User Total Reward</h5>
+                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >{totalreward}</p>
                     </div>
 
                     <div className="w-[3px] h-24 tablet:hidden bg-gradient-to-b from-transparent via-gray-200    via-50% to-transparent" />
 
                     <div id="banner-card" className="flex gap-2 flex-col items-center justify-center" >
-                        <h5 className="text-xl text-white " >Total rewards paid</h5>
-                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >$0,00,000</p>
+                        <h5 className="text-xl text-white " >Total Staked</h5>
+                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >{totalstaked}</p>
                     </div>
 
                     <div className="w-[3px] h-24 tablet:hidden bg-gradient-to-b from-transparent via-gray-200    via-50% to-transparent" />
 
                     <div id="banner-card" className="flex gap-2 flex-col items-center justify-center" >
-                        <h5 className="text-xl text-white " >Stakers</h5>
-                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >$2,000</p>
+                        <h5 className="text-xl text-white " >Total Staker</h5>
+                        <p className="text-4xl laptop:text-3xl laptop:tablet:text-2xl laptop:tablet:phone:text-2xl font-bold text-[--primary-color] " >{totalstaker}</p>
                     </div>
 
                 </div>
